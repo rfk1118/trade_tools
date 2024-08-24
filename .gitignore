@@ -14,3 +14,5 @@ ENV/
 # IDE
 .vscode/
 .idea/
+*.json
+*.csv

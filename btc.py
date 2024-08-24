@@ -4,6 +4,8 @@ import time
 from tabulate import tabulate
 from datetime import datetime
 from colorama import Fore, Style, init
+import csv
+import os
 
 # 初始化 colorama
 init(autoreset=True)
@@ -86,10 +88,26 @@ def color_difference(diff):
     else:
         return diff
 
+def save_data_to_file(data):
+    today = datetime.now().strftime('%Y-%m-%d')
+    filename = f"crypto_data_{today}.csv"
+    
+    file_exists = os.path.isfile(filename)
+    with open(filename, 'a', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        if not file_exists:
+            headers = ['Timestamp', 'Exchange', 'BTC Spot', 'BTC Futures', 'BTC Diff', 'ETH Spot', 'BNB Spot', 'SOL Spot', 'Open Interest', 'Delay']
+            writer.writerow(headers)
+        
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        for row in data:
+            # Remove color codes from BTC Diff
+            row[3] = row[3].replace(Fore.RED, '').replace(Fore.GREEN, '').replace(Style.RESET_ALL, '')
+            writer.writerow([timestamp] + row)
+
 def main():
     exchanges = ['binance', 'okx', 'gateio', 'coinbase']
     threads = [ExchangeThread(exchange) for exchange in exchanges]
-    symbols = ['BTC', 'ETH', 'BNB', 'SOL']
 
     for thread in threads:
         thread.start()
@@ -123,6 +141,10 @@ def main():
 
         print(f"\n{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(tabulate(table_data, headers=headers, tablefmt='fancy_grid'))
+        
+        # Save data to file
+        save_data_to_file(table_data)
+        
         time.sleep(1)
 
 if __name__ == "__main__":
