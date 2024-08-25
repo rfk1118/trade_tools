@@ -6,6 +6,7 @@ from datetime import datetime
 from colorama import Fore, Style, init
 import csv
 import os
+import sys
 
 # 初始化 colorama
 init(autoreset=True)
@@ -108,47 +109,64 @@ def save_data_to_file(data):
 def main():
     exchanges = ['binance', 'okx', 'gateio', 'coinbase']
     threads = [ExchangeThread(exchange) for exchange in exchanges]
+    exception_count = 0
+    max_exceptions = 100
 
     for thread in threads:
         thread.start()
 
     while True:
-        table_data = []
-        for thread in threads:
-            if thread.last_update:
-                delay = (datetime.now() - thread.last_update).total_seconds()
-                exchange_data = [thread.exchange_id.capitalize()]
-                
-                # BTC 显示现货、期货和差价
-                btc_spot = format_price(thread.spot_price.get('BTC'))
-                btc_futures = format_price(thread.futures_price.get('BTC'))
-                btc_diff = calculate_difference(thread.spot_price.get('BTC'), thread.futures_price.get('BTC'))
-                btc_colored_diff = color_difference(btc_diff)
-                exchange_data.extend([btc_spot, btc_futures, btc_colored_diff])
-                
-                # ETH, BNB, SOL 只显示现货价格
-                for symbol in ['ETH', 'BNB', 'SOL']:
-                    spot_price = format_price(thread.spot_price.get(symbol))
-                    exchange_data.append(spot_price)
-                
-                open_interest = f"{thread.open_interest:.2f}" if thread.open_interest is not None else "N/A"
-                exchange_data.extend([open_interest, f"{delay:.2f}s"])
-                table_data.append(exchange_data)
-            else:
-                table_data.append([thread.exchange_id.capitalize()] + ['N/A'] * 7)
+        try:
+            table_data = []
+            for thread in threads:
+                if thread.last_update:
+                    delay = (datetime.now() - thread.last_update).total_seconds()
+                    exchange_data = [thread.exchange_id.capitalize()]
+                    
+                    # BTC 显示现货、期货和差价
+                    btc_spot = format_price(thread.spot_price.get('BTC'))
+                    btc_futures = format_price(thread.futures_price.get('BTC'))
+                    btc_diff = calculate_difference(thread.spot_price.get('BTC'), thread.futures_price.get('BTC'))
+                    btc_colored_diff = color_difference(btc_diff)
+                    exchange_data.extend([btc_spot, btc_futures, btc_colored_diff])
+                    
+                    # ETH, BNB, SOL 只显示现货价格
+                    for symbol in ['ETH', 'BNB', 'SOL']:
+                        spot_price = format_price(thread.spot_price.get(symbol))
+                        exchange_data.append(spot_price)
+                    
+                    open_interest = f"{thread.open_interest:.2f}" if thread.open_interest is not None else "N/A"
+                    exchange_data.extend([open_interest, f"{delay:.2f}s"])
+                    table_data.append(exchange_data)
+                else:
+                    table_data.append([thread.exchange_id.capitalize()] + ['N/A'] * 7)
 
-        headers = ['Exchange', 'BTC Spot', 'BTC Futures', 'BTC Diff', 'ETH Spot', 'BNB Spot', 'SOL Spot', 'Open Interest', 'Delay']
+            headers = ['Exchange', 'BTC Spot', 'BTC Futures', 'BTC Diff', 'ETH Spot', 'BNB Spot', 'SOL Spot', 'Open Interest', 'Delay']
 
-        print(f"\n{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(tabulate(table_data, headers=headers, tablefmt='fancy_grid'))
-        
-        # Save data to file
-        save_data_to_file(table_data)
-        
-        time.sleep(1)
+            print(f"\n{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            print(tabulate(table_data, headers=headers, tablefmt='fancy_grid'))
+            
+            # Save data to file
+            save_data_to_file(table_data)
+            
+            time.sleep(1)
+            exception_count = 0  # 重置异常计数器
+        except Exception as e:
+            print(f"Error in main loop: {str(e)}")
+            exception_count += 1
+            if exception_count > max_exceptions:
+                print(f"Exceeded {max_exceptions} exceptions. Restarting program...")
+                os.execv(sys.executable, ['python'] + sys.argv)
+            time.sleep(1)
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        print("\nProgram terminated by user.")
+    while True:
+        try:
+            main()
+        except KeyboardInterrupt:
+            print("\nProgram terminated by user.")
+            break
+        except Exception as e:
+            print(f"Unhandled exception in main: {str(e)}")
+            print("Restarting program...")
+            time.sleep(5)  # 等待5秒后重启

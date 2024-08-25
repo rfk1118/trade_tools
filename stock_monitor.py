@@ -47,9 +47,9 @@ def color_change(change):
         return 'N/A'
 
 def main():
-    symbols = ['SPY', '^DJI', '^IXIC', 'NVDA', 'AAPL', 'TSLA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'BRK-B', 'JPM', 'DX-Y.NYB']
-    names = ['S&P 500 (SPY)', 'Dow Jones', 'NASDAQ', 'NVIDIA', 'Apple', 'Tesla', 'Microsoft', 'Amazon', 'Alphabet', 'Meta', 'Berkshire Hathaway', 'JPMorgan Chase', 'US Dollar Index']
-    notes = ['', '', '', '', '', '', '科技巨头', '电商巨头', 'Google母公司', '前Facebook', '沃伦·巴菲特的公司', '大型银行代表', '']
+    symbols = ['SPY', '^DJI', '^IXIC', 'NVDA', 'AAPL', 'TSLA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'BRK-B', 'JPM', 'DX-Y.NYB', 'CNY=X']
+    names = ['S&P 500 (SPY)', 'Dow Jones', 'NASDAQ', 'NVIDIA', 'Apple', 'Tesla', 'Microsoft', 'Amazon', 'Alphabet', 'Meta', 'Berkshire Hathaway', 'JPMorgan Chase', 'US Dollar Index', 'USD/CNY']
+    notes = ['', '', '', '', '', '', '科技巨头', '电商巨头', 'Google母公司', '前Facebook', '沃伦·巴菲特的公司', '大型银行代表', '', '人民币兑美元']
     
     while True:
         threads = [StockThread(symbol, name, note) for symbol, name, note in zip(symbols, names, notes)]
